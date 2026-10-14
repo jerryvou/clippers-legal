@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>clippers &mdash; authorization received</title>
+  <style>
+    :root { color-scheme: light dark; }
+    body {
+      font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      max-width: 42rem; margin: 3rem auto; padding: 0 1.25rem;
+      line-height: 1.5; color: #111;
+    }
+    @media (prefers-color-scheme: dark) { body { background: #111; color: #eee; } }
+    h1 { font-size: 1.4rem; }
+    .field { margin: 1rem 0; }
+    label { display: block; font-weight: 600; font-size: .85rem; margin-bottom: .3rem; }
+    .row { display: flex; gap: .5rem; }
+    input[readonly] {
+      flex: 1; font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+      font-size: .85rem; padding: .5rem .6rem; border: 1px solid #888; border-radius: 6px;
+      word-break: break-all; background: transparent;
+    }
+    button {
+      padding: .5rem .9rem; border: 1px solid #888; border-radius: 6px;
+      background: #eee; cursor: pointer; white-space: nowrap;
+    }
+    @media (prefers-color-scheme: dark) { button { background: #333; color: #eee; } }
+    button:active { transform: translateY(1px); }
+    .error { color: #b00020; font-weight: 600; }
+    .hint { font-size: .9rem; opacity: .8; }
+    .copied { color: #0a7d32; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <h1>Authorization received</h1>
+
+  <div id="error" class="error" hidden></div>
+
+  <div id="ok">
+    <p class="hint">Copy the two values below and paste them into the terminal when prompted,
+      then you can close this tab.</p>
+
+    <div class="field">
+      <label for="code">Code</label>
+      <div class="row">
+        <input id="code" readonly aria-label="Authorization code">
+        <button type="button" data-copy="#code">Copy</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="state">State</label>
+      <div class="row">
+        <input id="state" readonly aria-label="State">
+        <button type="button" data-copy="#state">Copy</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      var qs = new URLSearchParams(window.location.search);
+      var code = qs.get("code") || "";
+      var state = qs.get("state") || "";
+      var err = qs.get("error") || "";
+      var desc = qs.get("error_description") || "";
+
+      if (err || desc || !code) {
+        document.getElementById("ok").hidden = true;
+        var el = document.getElementById("error");
+        el.hidden = false;
+        el.textContent = err
+          ? ("Authorization failed: " + err + (desc ? " — " + desc : ""))
+          : "No authorization code was returned. Check the authorize URL and try again.";
+        return;
+      }
+
+      document.getElementById("code").value = code;
+      document.getElementById("state").value = state;
+
+      document.querySelectorAll("button[data-copy]").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          var input = document.querySelector(btn.getAttribute("data-copy"));
+          input.select();
+          input.setSelectionRange(0, 99999);
+          var ok = false;
+          try { ok = document.execCommand("copy"); } catch (e) { ok = false; }
+          if (!ok && navigator.clipboard) {
+            navigator.clipboard.writeText(input.value);
+          }
+          var old = btn.textContent;
+          btn.textContent = "Copied";
+          btn.classList.add("copied");
+          setTimeout(function () { btn.textContent = old; btn.classList.remove("copied"); }, 1500);
+        });
+      });
+    })();
+  </script>
+</body>
+</html>
